@@ -10124,3 +10124,192 @@ a { color: var(--cyan); text-decoration: none; }
 .lq-skin-radar .rv-facts-pc li { color: #f8fafc; }
 .lq-skin-radar .rv-facts-stats em,
 .lq-skin-radar .rv-facts-pc em { color: #94a3b8; }
+
+/* Quick-commerce danger zones (Zepto / Blinkit / Instamart dark stores) */
+.dz-pin {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+}
+.dz-pulse {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.35);
+  animation: dz-pulse 1.8s ease-out infinite;
+}
+.dz-core {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #dc2626;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.45);
+  color: #fff;
+  font-size: 13px;
+  display: grid;
+  place-items: center;
+}
+.dz-label {
+  position: relative;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+  color: #b91c1c;
+  background: #fff;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+  padding: 0.12rem 0.45rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+.dz-pin.on .dz-core { background: #991b1b; transform: scale(1.12); }
+.dz-pin.on .dz-label { background: #dc2626; color: #fff; border-color: #dc2626; }
+@keyframes dz-pulse {
+  0% { transform: scale(1); opacity: 0.9; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+.dz-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem 0.3rem 0.35rem;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
+  pointer-events: auto;
+}
+.dz-alert em {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #fff;
+  background: #dc2626;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  animation: dz-blink 1.6s ease-in-out infinite;
+}
+@keyframes dz-blink {
+  50% { opacity: 0.55; }
+}
+
+.lq-map-keys .dz-key {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.45;
+}
+.lq-map-keys .dz-key.on { opacity: 1; }
+.k-dark { background: #dc2626; box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2); }
+
+.dz-card {
+  position: absolute;
+  z-index: 535;
+  left: 14px;
+  bottom: 18px;
+  width: min(300px, calc(100vw - 40px));
+  background: #fff;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #dc2626;
+  border-radius: 14px;
+  padding: 0.7rem 0.8rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  display: grid;
+  gap: 0.4rem;
+}
+.dz-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.dz-card-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #fff;
+  background: #dc2626;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+}
+.dz-card-top button {
+  border: 0;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  color: #64748b;
+  cursor: pointer;
+}
+.dz-card strong {
+  font-size: 15px;
+  color: #0f2944;
+}
+.dz-card-sub {
+  margin: 0;
+  font-size: 12px;
+  color: #b91c1c;
+  font-weight: 600;
+}
+.dz-card-hits,
+.dz-card-fight {
+  border-radius: 10px;
+  padding: 0.4rem 0.55rem;
+}
+.dz-card-hits { background: #fef2f2; }
+.dz-card-fight { background: #ecfdf5; }
+.dz-card-hits em,
+.dz-card-fight em {
+  display: block;
+  font-style: normal;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.1rem;
+}
+.dz-card-hits span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #7f1d1d;
+}
+.dz-card-fight p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #065f46;
+}
+.dz-card-note {
+  margin: 0;
+  font-size: 10px;
+  color: #94a3b8;
+}
+.lq-skin-radar .dz-label { background: #1f0a0a; color: #fecaca; border-color: #7f1d1d; }
+@media (max-width: 720px) {
+  .dz-card { bottom: 72px; left: 12px; right: 12px; width: auto; }
+}
+@media (min-width: 721px) {
+  .lq-hud-right { flex-wrap: nowrap; }
+  .lq-keys-inline { white-space: nowrap; }
+}

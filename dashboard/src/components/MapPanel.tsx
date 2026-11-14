@@ -3,6 +3,7 @@ import L from 'leaflet'
 import { Circle, MapContainer, Marker, Polyline, TileLayer, useMap } from 'react-leaflet'
 import type { CompetitorShop, CompetitorSource, GeoPoint } from '../types'
 import { shopFrontPhoto } from '../lib/shopPhotos'
+import { buildDarkStores, type DarkStore } from '../lib/darkStores'
 import 'leaflet/dist/leaflet.css'
 
 /**
@@ -169,6 +170,19 @@ function shopIcon(shop: CompetitorShop, active: boolean, style: MapStyle) {
   })
 }
 
+function darkIcon(store: DarkStore, active: boolean) {
+  return L.divIcon({
+    className: 'lq-marker-wrap',
+    html: `<div class="dz-pin${active ? ' on' : ''}">
+      <span class="dz-pulse"></span>
+      <span class="dz-core">⚡</span>
+      <span class="dz-label">${store.brand} · ${store.etaMin} min</span>
+    </div>`,
+    iconSize: [130, 40],
+    iconAnchor: [14, 14],
+  })
+}
+
 function aiTipFor(shop: CompetitorShop): string {
   if (shop.threat === 'high') return 'High threat — win on stock + reviews'
   if (shop.reviews) return `★${shop.reviews.rating} · open pin for beat playbook`
@@ -195,6 +209,19 @@ export function MapPanel({
   const [visibleCount, setVisibleCount] = useState(0)
   const [beams, setBeams] = useState(false)
   const [style, setStyle] = useState<MapStyle>('streets')
+  const [showDark, setShowDark] = useState(true)
+  const [activeDarkId, setActiveDarkId] = useState<string | null>(null)
+
+  const darkStores = useMemo(
+    () => buildDarkStores({ lat: center.lat, lng: center.lng }),
+    [center.lat, center.lng],
+  )
+
+  useEffect(() => {
+    setActiveDarkId(null)
+  }, [activeId])
+  const activeDark = darkStores.find((d) => d.id === activeDarkId) || null
+  const darkClose = darkStores.filter((d) => d.distanceKm <= 1.2).length
 
   const enriched = useMemo(
     () =>
@@ -326,7 +353,39 @@ export function MapPanel({
               />
             ))}
 
+          {showDark &&
+            !loading &&
+            darkStores.map((d) => (
+              <Circle
+                key={`dz-${d.id}`}
+                center={[d.lat, d.lng]}
+                radius={d.zoneM}
+                pathOptions={{
+                  color: '#dc2626',
+                  weight: activeDarkId === d.id ? 2 : 1.2,
+                  dashArray: '6 6',
+                  fillColor: '#ef4444',
+                  fillOpacity: activeDarkId === d.id ? 0.2 : 0.11,
+                }}
+                eventHandlers={{ click: () => setActiveDarkId(d.id) }}
+              />
+            ))}
+
           <Marker position={[center.lat, center.lng]} icon={youIcon(style)} zIndexOffset={1200} />
+
+          {showDark &&
+            !loading &&
+            darkStores.map((d) => (
+              <Marker
+                key={`dzm-${d.id}-${activeDarkId === d.id ? 'on' : 'off'}`}
+                position={[d.lat, d.lng]}
+                icon={darkIcon(d, activeDarkId === d.id)}
+                zIndexOffset={activeDarkId === d.id ? 1150 : 900}
+                eventHandlers={{
+                  click: () => setActiveDarkId((id) => (id === d.id ? null : d.id)),
+                }}
+              />
+            ))}
 
           {visible.map((shop) => (
             <Marker
@@ -371,6 +430,19 @@ export function MapPanel({
               <i className="r20" /> 2 km
             </span>
           </div>
+          {!loading && showDark && darkStores.length > 0 && (
+            <button
+              type="button"
+              className="dz-alert"
+              onClick={() => setActiveDarkId(darkStores[0].id)}
+            >
+              <em>Red alert</em>
+              <span>
+                {darkStores.length} quick-commerce dark stores within 2 km
+                {darkClose ? ` · ${darkClose} under 1.2 km` : ''}
+              </span>
+            </button>
+          )}
         </div>
         <div className="lq-hud-right">
           <div className="lq-map-keys lq-keys-inline">
@@ -386,6 +458,17 @@ export function MapPanel({
             <div>
               <i className="k-low" /> Low
             </div>
+            <button
+              type="button"
+              className={`dz-key ${showDark ? 'on' : ''}`}
+              onClick={() => {
+                setShowDark((v) => !v)
+                setActiveDarkId(null)
+              }}
+              aria-pressed={showDark}
+            >
+              <i className="k-dark" /> Dark stores
+            </button>
           </div>
           <div className="lq-style-toggle" role="group" aria-label="Map style">
             <button
@@ -413,7 +496,34 @@ export function MapPanel({
         </div>
       </div>
 
-      {active && !loading && (
+      {activeDark && !loading && (
+        <div className="dz-card" role="dialog" aria-label={`${activeDark.brand} dark store`}>
+          <div className="dz-card-top">
+            <span className="dz-card-badge">Danger zone</span>
+            <button type="button" onClick={() => setActiveDarkId(null)} aria-label="Close">
+              ×
+            </button>
+          </div>
+          <strong>
+            {activeDark.brand} dark store · {activeDark.distanceKm} km
+          </strong>
+          <p className="dz-card-sub">
+            {activeDark.etaMin}-min delivery · pulls basket orders within ~
+            {Math.round(activeDark.zoneM / 100) / 10} km
+          </p>
+          <div className="dz-card-hits">
+            <em>They take</em>
+            <span>{activeDark.hitsSkus.join(' · ')}</span>
+          </div>
+          <div className="dz-card-fight">
+            <em>Fight back</em>
+            <p>{activeDark.fightBack}</p>
+          </div>
+          <p className="dz-card-note">Estimated location</p>
+        </div>
+      )}
+
+      {active && !loading && !activeDark && (
         <div className="lq-ai-chip lq-ai-chip-float">
           <em>Tip</em>
           <span>{aiTipFor(active)}</span>
