@@ -1,4 +1,4 @@
-import type { CompetitorIntel } from '../types'
+import type { CompetitorIntel, ReviewThemeScore } from '../types'
 import { shopFrontPhoto } from '../lib/shopPhotos'
 import { EmptyState } from './EmptyState'
 
@@ -89,9 +89,11 @@ export function CompetitorIntelPanel({
             </div>
           </div>
 
+          <RivalFacts intel={intel} themes={themes} />
+
           <div className="ra-float-ai">
             <em>Do this week</em>
-            <p>{shorten(moveNow, 88)}</p>
+            <p>{shorten(moveNow, 140)}</p>
           </div>
         </div>
       </div>
@@ -136,9 +138,13 @@ export function CompetitorIntelPanel({
         </div>
       </div>
 
+      <div className="rv-sheet-facts">
+        <RivalFacts intel={intel} themes={themes} />
+      </div>
+
       <div className="ra-ai">
         <em>Do this week</em>
-        <p>{shorten(moveNow, 110)}</p>
+        <p>{shorten(moveNow, 160)}</p>
       </div>
 
       {reviews?.live && reviews.snippets && reviews.snippets.length > 0 ? (
@@ -157,6 +163,56 @@ export function CompetitorIntelPanel({
           </ul>
         </div>
       ) : null}
+    </div>
+  )
+}
+
+function RivalFacts({ intel, themes }: { intel: CompetitorIntel; themes: ReviewThemeScore[] }) {
+  const { shop, pricePressure, overlapScore } = intel
+  const reviews = shop.reviews
+  const ranked = [...themes].sort((a, b) => b.score - a.score)
+  const pros = ranked.filter((t) => t.score >= 3.8).slice(0, 2)
+  const cons = [...ranked].reverse().filter((t) => t.score < 3.8).slice(0, 2)
+
+  const stats = [
+    { label: 'Footfall', value: `~${shop.estimatedFootfall}/day` },
+    { label: 'Shared buyers', value: `${overlapScore}%` },
+    { label: 'Price pressure', value: `${pricePressure}%` },
+    { label: 'New reviews', value: reviews ? `${reviews.recentReviews30d} / 30d` : '—' },
+  ]
+
+  return (
+    <div className="rv-facts">
+      <div className="rv-facts-stats">
+        {stats.map((s) => (
+          <div key={s.label}>
+            <b>{s.value}</b>
+            <em>{s.label}</em>
+          </div>
+        ))}
+      </div>
+      <div className="rv-facts-pc">
+        <div className="pro">
+          <em>Their pros</em>
+          <ul>
+            {(pros.length ? pros : ranked.slice(0, 1)).map((t) => (
+              <li key={t.key}>
+                {t.label} <span>{(Math.floor(t.score * 10) / 10).toFixed(1)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="con">
+          <em>Their cons</em>
+          <ul>
+            {(cons.length ? cons : ranked.slice(-1)).map((t) => (
+              <li key={t.key}>
+                {t.label} <span>{(Math.floor(t.score * 10) / 10).toFixed(1)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </div>
   )
 }

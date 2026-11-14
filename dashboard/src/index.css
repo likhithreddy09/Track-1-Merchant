@@ -10030,3 +10030,97 @@ a { color: var(--cyan); text-decoration: none; }
     justify-self: center;
   }
 }
+
+/* Rival card — quick stats + pros / cons */
+.rv-facts {
+  display: grid;
+  gap: 0.4rem;
+}
+.rv-facts-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.3rem;
+}
+.rv-facts-stats > div {
+  border-radius: 9px;
+  padding: 0.35rem 0.3rem;
+  background: #f8fafc;
+  border: 1px solid #eef2f6;
+  text-align: center;
+  min-width: 0;
+}
+.rv-facts-stats b {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #002970;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rv-facts-stats em {
+  display: block;
+  font-style: normal;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #64748b;
+  margin-top: 0.1rem;
+}
+.rv-facts-pc {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+.rv-facts-pc > div {
+  border-radius: 10px;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #eef2f6;
+  background: #fff;
+}
+.rv-facts-pc .pro { border-left: 3px solid #16a34a; }
+.rv-facts-pc .con { border-left: 3px solid #f97316; }
+.rv-facts-pc em {
+  display: block;
+  font-style: normal;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.15rem;
+}
+.rv-facts-pc ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+.rv-facts-pc li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.3rem;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #0f2944;
+}
+.rv-facts-pc li span {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.rv-facts-pc .pro li span { color: #16a34a; }
+.rv-facts-pc .con li span { color: #ea580c; }
+.rv-sheet-facts {
+  padding: 0 1rem 0.75rem;
+}
+.lq-skin-radar .rv-facts-stats > div,
+.lq-skin-radar .rv-facts-pc > div {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.lq-skin-radar .rv-facts-stats b,
+.lq-skin-radar .rv-facts-pc li { color: #f8fafc; }
+.lq-skin-radar .rv-facts-stats em,
+.lq-skin-radar .rv-facts-pc em { color: #94a3b8; }
