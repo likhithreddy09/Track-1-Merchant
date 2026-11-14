@@ -48,7 +48,7 @@ export function Dashboard({
   shopName: string
   onReset: () => void
 }) {
-  const [tab, setTab] = useState<Tab>('home')
+  const [tab, setTab] = useState<Tab>('map')
   const [loading, setLoading] = useState(true)
   const [loadLabel, setLoadLabel] = useState('Pinning your shop…')
   const [source, setSource] = useState<CompetitorSource>('simulated')
