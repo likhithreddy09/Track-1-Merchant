@@ -69,7 +69,8 @@ function localHabits(
     { key: 'offer', n: offerSensitive },
     { key: 'quality', n: qualitySensitive },
     { key: 'convenience', n: convenienceSensitive },
-  ].sort((a, b) => b.n - a.n)
+  ]
+  ranked.sort((a, b) => b.n - a.n)
 
   const dominant = ranked[0].key
   const traitLabel =
