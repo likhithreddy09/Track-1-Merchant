@@ -10313,3 +10313,100 @@ a { color: var(--cyan); text-decoration: none; }
   .lq-hud-right { flex-wrap: nowrap; }
   .lq-keys-inline { white-space: nowrap; }
 }
+
+/* EDI alert — compact red alert instead of a full banner */
+.nq-edi-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin: 0 0 0.9rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #dc2626;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #7f1d1d;
+  box-shadow: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.nq-edi-strip:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+.nq-edi-strip-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #dc2626;
+  color: #fff;
+  font-size: 10px;
+  padding: 0.18rem 0.55rem;
+}
+.nq-edi-strip-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  animation: dz-blink 1.6s ease-in-out infinite;
+}
+.nq-edi-strip strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: #991b1b;
+}
+.nq-edi-strip span.nq-edi-strip-hint {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #b45353;
+}
+.nq-edi-strip span.nq-edi-strip-go {
+  margin-left: auto;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #dc2626;
+  white-space: nowrap;
+}
+
+.ix-edi-attention {
+  padding: 0.8rem 0.95rem;
+  background: #fff;
+  color: #0f2944;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #dc2626;
+  box-shadow: 0 2px 10px rgba(220, 38, 38, 0.08);
+  gap: 0.55rem;
+  animation: none;
+}
+.ix-edi-badge {
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 10.5px;
+  padding: 0.22rem 0.55rem;
+}
+.ix-edi-due {
+  color: #dc2626;
+}
+.ix-edi-attention-grid em {
+  color: #64748b;
+}
+.ix-edi-attention-grid strong {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #002970;
+}
+.ix-edi-attention-grid > div:first-child strong {
+  color: #dc2626;
+}
+.ix-edi-cover {
+  color: #059669 !important;
+}
+.ix-edi-flow {
+  font-size: 12.5px;
+  color: #475569;
+}
+.ix-edi-cta {
+  background: #dc2626;
+  color: #fff;
+}

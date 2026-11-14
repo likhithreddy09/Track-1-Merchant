@@ -235,9 +235,10 @@ export function Dashboard({
             </p>
 
             <button type="button" className="nq-edi-strip" onClick={() => go('stock')}>
-              <span className="nq-edi-strip-badge">Start here</span>
+              <span className="nq-edi-strip-badge">EDI due today</span>
               <strong>Cover today’s Paytm EDI</strong>
-              <span>Sell idle stock → cash pays the daily cut</span>
+              <span className="nq-edi-strip-hint">Sell idle stock → cash pays the daily cut</span>
+              <span className="nq-edi-strip-go">Cover EDI →</span>
             </button>
 
             <section className="nq-metrics" aria-label="Key numbers">
