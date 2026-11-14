@@ -349,7 +349,7 @@ export function InventoryExchange({
         <div className="ix-main">
       <aside className="ix-edi-attention" aria-label="Paytm EDI payment">
         <div className="ix-edi-attention-top">
-          <span className="ix-edi-badge">Attention · Paytm EDI</span>
+          <span className="ix-edi-badge">Paytm EDI</span>
           <span className="ix-edi-due">Due today</span>
         </div>
         <div className="ix-edi-attention-grid">
@@ -367,8 +367,7 @@ export function InventoryExchange({
           </div>
         </div>
         <p className="ix-edi-flow">
-          <b>Demo flow:</b> Pick stock → match a nearby buyer → confirm sale → cash covers today’s EDI
-          before settlement.
+          Pick stock → match a nearby buyer → confirm → cash covers today’s EDI before settlement.
         </p>
         {flow !== 'emi' && (
           <button type="button" className="ix-edi-cta" onClick={() => switchFlow('emi')}>
@@ -423,7 +422,7 @@ export function InventoryExchange({
           <b>1</b>
           <span className="wf-mode-title">Cover EDI</span>
           <em>Sell stock · pay today’s cut</em>
-          <i className="wf-mode-tag">Try this</i>
+          <i className="wf-mode-tag">Start here</i>
         </button>
         <button
           type="button"

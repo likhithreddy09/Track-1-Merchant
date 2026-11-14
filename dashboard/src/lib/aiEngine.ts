@@ -12,10 +12,16 @@ import { mulberry32, seedFromPoint } from './geo'
 import type { GeoPoint } from '../types'
 import { buildGoogleReviewProfile, buildRivalPlaybook } from './googleReviews'
 
+function clip(text: string, max: number) {
+  const t = text.replace(/\s+/g, ' ').trim()
+  if (t.length <= max) return t
+  return `${t.slice(0, max - 1).trim()}…`
+}
+
 export function buildCompetitorIntel(
   shop: CompetitorShop,
   shopType: ShopType,
-  demo: DemographicSnapshot,
+  _demo: DemographicSnapshot,
   location: GeoPoint,
 ): CompetitorIntel {
   const rand = mulberry32(seedFromPoint(location, shop.id))
@@ -41,9 +47,19 @@ export function buildCompetitorIntel(
 
   const bestTheme = [...reviews.themes].sort((a, b) => b.score - a.score)[0]
   const worstTheme = [...reviews.themes].sort((a, b) => a.score - b.score)[0]
+  const sku = shopType.stockSkus[0]
+  const shortName = shop.name.split(/[\s,/]+/)[0]
 
-  const strength = `Google reviews (${reviews.reviewCount.toLocaleString()}) lift ★${reviews.rating} — strongest on ${bestTheme.label.toLowerCase()} (“${reviews.topPraise}”).`
-  const weakness = `Review gap on ${worstTheme.label.toLowerCase()} (“${reviews.topComplaint}”) — your opening to steal share from ${demo.households.toLocaleString()} nearby HH.`
+  const strength = `Strong on ${bestTheme.label.toLowerCase()} — “${clip(reviews.topPraise, 40)}”.`
+  const weakness = `Weak on ${worstTheme.label.toLowerCase()} — “${clip(reviews.topComplaint, 40)}”.`
+
+  // One short move — shop-specific, no filler
+  const moveNow =
+    shop.threat === 'high' || stealRisk >= 65
+      ? `${playbook.beat[0]} Do it before ${peakHours} vs ${shortName}.`
+      : shop.distanceKm < 0.6
+        ? `${playbook.beat[0]} They’re only ${shop.distanceKm} km away.`
+        : `${playbook.beat[0]} Keep ${sku} ready for ${peakHours}.`
 
   return {
     shop: { ...shop, reviews, rating: reviews.rating },
@@ -53,11 +69,8 @@ export function buildCompetitorIntel(
     peakHours,
     strength,
     weakness,
-    aiBrief: `${shop.name} · ${shop.distanceKm} km · ★${reviews.rating} (${reviews.reviewCount.toLocaleString()} reviews, sentiment ${reviews.sentiment}/100) · footfall ~${shop.estimatedFootfall}/day · steal-risk ${stealRisk}% vs your ${shopType.label.toLowerCase()}. Peak pressure ${peakHours}.`,
-    moveNow:
-      shop.threat === 'high' || stealRisk > 65
-        ? `${playbook.beat[0]} Cover ${shopType.stockSkus[0]} before ${peakHours} — steal-risk ${stealRisk}%.`
-        : `Track weekly. ${playbook.beat[0]} Then open Inventory to move slow stock.`,
+    aiBrief: `${shop.name} · ${shop.distanceKm} km · ★${reviews.rating} · steal ${stealRisk}% · peak ${peakHours}`,
+    moveNow,
     reviewScorecard: playbook.scorecard,
     copyFromRival: playbook.copy,
     beatRival: playbook.beat,
@@ -280,23 +293,40 @@ export function answerMerchantQuestion(
   if (q.includes('age') || q.includes('people') || q.includes('demographic') || q.includes('customer') || q.includes('household')) {
     return `Around ${ctx.place.neighbourhood}: ~${ctx.demo.households.toLocaleString('en-IN')} households and ${ctx.demo.totalPeople.toLocaleString('en-IN')} people (±${ctx.demo.populationCi95.toLocaleString('en-IN')}). Working-age ${ctx.demo.workingAgePercent}%, kids ${ctx.demo.childrenPercent}%, seniors ${ctx.demo.seniorsPercent}%. For your ${ctx.shopType.label}, sell first to ${ctx.shopType.targetSegments[0]}, then ${ctx.shopType.targetSegments[1]}. Stock ${ctx.shopType.stockSkus[0]} and ${ctx.shopType.stockSkus[1]} this week.`
   }
+  // EDI / EMI — must never fall through to catchment maths
+  if (
+    /\bedi\b/.test(q) ||
+    /\bemi\b/.test(q) ||
+    q.includes('daily cut') ||
+    q.includes('loan cut') ||
+    q.includes('settlement') ||
+    q.includes('equated daily')
+  ) {
+    const skuA = ctx.shopType.stockSkus[0]
+    const skuB = ctx.shopType.stockSkus[1]
+    return [
+      `EDI (Equated Daily Instalment) is the daily cut Paytm takes from your settlement to repay a merchant loan.`,
+      `EMI usually means the same idea for monthly loans — here we focus on the daily EDI cut.`,
+      `If shelves are full of slow stock, cash is locked but EDI still falls due.`,
+      `In Neighbourhood: open Inventory → Cover EDI → sell ${skuA} / ${skuB} (or other idle SKUs) to a nearby buyer → confirm.`,
+      `Sale cash helps cover today’s EDI before settlement.`,
+    ].join(' ')
+  }
   if (q.includes('stock') || q.includes('inventory') || q.includes('buy') || q.includes('sell') || q.includes('deal') || q.includes('exchange')) {
-    return `Open Inventory Exchange (⌘/Ctrl+2). Prioritise ${ctx.shopType.stockSkus[0]} and ${ctx.shopType.stockSkus[1]}. Sort by Best match / Deal ₹ / Nearest — local surplus is usually faster than a distributor.`
+    return `Open Inventory → Cover EDI. Prioritise ${ctx.shopType.stockSkus[0]} and ${ctx.shopType.stockSkus[1]}. Sell to a nearby buyer — cash can cover today’s EDI cut.`
   }
-  if (q.includes('tomorrow') || q.includes('forecast') || q.includes('today') || q.includes('week') || q.includes('weekend')) {
-    return `Near-term: ${ctx.shopType.demandKeywords[0]} is the lead signal. Live pulse ~${ctx.demo.livePulse} now. Check the 7-day demand index on the board — weekends usually peak for ${ctx.shopType.label.toLowerCase()}.`
+  if (q.includes('tomorrow') || q.includes('forecast') || q.includes('week') || q.includes('weekend')) {
+    return `Near-term: ${ctx.shopType.demandKeywords[0]} is the lead signal. Live pulse ~${ctx.demo.livePulse}. Check This week on Overview — weekends usually peak for ${ctx.shopType.label.toLowerCase()}.`
   }
-  if (q.includes('steal') || q.includes('risk')) {
+  if (q.includes('steal risk')) {
     const r = rival || topRated
     return r
-      ? `Steal risk blends proximity e^(−1.4d), ★ lift, log10(review volume), and sentiment — logistic mapped to %. Closest watch: “${r.name}” at ${r.distanceKm} km ★${r.rating}. Open their pin for the scored playbook.`
-      : `Steal risk = logistic(0.42·proximity + 0.28·★ + 0.18·review volume + 0.12·sentiment). Hover a rival to see it live.`
+      ? `Steal risk is higher when a rival is close and highly rated. Closest watch: “${r.name}” at ${r.distanceKm} km ★${r.rating}. Tap their map pin for one gap + one move.`
+      : `Steal risk rises with closer, higher-rated rivals. Tap a pin on the Map for the score.`
   }
-  if (q.includes('confiden') || q.includes('model') || q.includes('accurate') || q.includes('math')) {
-    return `Catchment uses ring gravity (λ=0.85): dens(r)×area(r)×e^(−λd). Result ${ctx.demo.totalPeople.toLocaleString()} ± ${ctx.demo.populationCi95.toLocaleString()} people, ${ctx.demo.households.toLocaleString()} HH, model confidence ${ctx.demo.modelConfidence}%.`
+  if (q.includes('catchment') || q.includes('how many people') || (q.includes('gravity') && q.includes('ring'))) {
+    return `Around ${ctx.place.neighbourhood}: about ${ctx.demo.totalPeople.toLocaleString('en-IN')} people (±${ctx.demo.populationCi95.toLocaleString('en-IN')}) and ${ctx.demo.households.toLocaleString('en-IN')} households within ~2 km.`
   }
-  return (
-    ctx.insights[0]?.body ||
-    `Based on ${ctx.place.neighbourhood} and your ${ctx.shopType.label} profile, focus on high-opportunity segments and local stock matches first.`
-  )
+  // Never dump formula / insight maths as a chat answer
+  return `Ask me about EDI, rivals, households, or idle stock — or tap a demo question below. For Cover EDI: Inventory → sell slow stock → cash pays today’s daily cut.`
 }

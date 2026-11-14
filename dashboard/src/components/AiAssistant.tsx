@@ -16,9 +16,9 @@ import {
 } from '../lib/sarvam'
 
 const KILLER_QS = [
-  'How many households nearby — and who should I sell to?',
-  'Who is my biggest rival and what should I copy vs beat?',
-  'How much cash can I unlock from slow stock today?',
+  'What is EDI and how do I cover today’s cut?',
+  'Who is my biggest rival — what should I do?',
+  'How many households nearby — who should I sell to?',
 ] as const
 
 type VoicePhase = 'idle' | 'listening' | 'thinking' | 'speaking'
@@ -69,23 +69,22 @@ export function AiAssistant({
     const closest = [...competitors].sort((a, b) => a.distanceKm - b.distanceKm)[0]
     const skuA = shopType.stockSkus[0]
     const skuB = shopType.stockSkus[1]
-    const idleEstimate = Math.round(demo.households * 0.35 + 4200)
     return {
-      [KILLER_QS[0]]: `Around ${place.neighbourhood}: ~${demo.households.toLocaleString('en-IN')} households (± CI) and ${demo.totalPeople.toLocaleString('en-IN')} people. Working-age ${demo.workingAgePercent}%, kids ${demo.childrenPercent}%, seniors ${demo.seniorsPercent}%. For your ${shopType.label}, sell first to ${shopType.targetSegments[0]} — then ${shopType.targetSegments[1]}. Next step: stock ${skuA} and ${skuB} for this week’s ${shopType.demandKeywords[0]}.`,
+      [KILLER_QS[0]]: `EDI is the daily cut Paytm takes from your settlement to repay a merchant loan. If idle stock locks your cash, EDI still falls due. Open Inventory → Cover EDI → sell ${skuA} / ${skuB} to a nearby buyer → confirm. That sale cash helps cover today’s cut before settlement.`,
       [KILLER_QS[1]]: rival
         ? (() => {
             const r =
               rival.reviews ||
               buildGoogleReviewProfile(rival, shopType, { lat: rival.lat, lng: rival.lng })
             const playbook = buildRivalPlaybook(r, shopType)
-            return `Biggest rating threat: “${rival.name}” ★${rival.rating} at ${rival.distanceKm} km (threat ${rival.threat}). Copy: ${playbook.copy[0]} Beat: ${playbook.beat[0]} Keep ${skuA} and ${skuB} fully stocked. ${
+            return `Biggest threat: “${rival.name}” ★${rival.rating} · ${rival.distanceKm} km. Do this: ${playbook.beat[0]} Keep ${skuA} stocked. ${
               closest && closest.id !== rival.id
-                ? `Also watch closest shop “${closest.name}” (${closest.distanceKm} km).`
+                ? `Also watch “${closest.name}” (${closest.distanceKm} km).`
                 : ''
-            } Next: fix one weakness this week — don’t only discount.`
+            } Tap their map pin for the gap.`
           })()
-        : `Still mapping rivals around ${place.neighbourhood}. Next step: open the Map tab and wait for pins — then ask again.`,
-      [KILLER_QS[2]]: `About ₹${idleEstimate.toLocaleString('en-IN')} is locked in slow stock. Clear ${skuA} and ${skuB} first. To pay today’s EDI: Inventory → Cover EDI → sell → confirm. Cash from the sale covers the daily cut before settlement.`,
+        : `Open the Map tab and wait for rival pins — then ask again.`,
+      [KILLER_QS[2]]: `Around ${place.neighbourhood}: ~${demo.households.toLocaleString('en-IN')} households and ${demo.totalPeople.toLocaleString('en-IN')} people. Working-age ${demo.workingAgePercent}%, kids ${demo.childrenPercent}%, seniors ${demo.seniorsPercent}%. Sell first to ${shopType.targetSegments[0]}, then ${shopType.targetSegments[1]}. Stock ${skuA} and ${skuB} for ${shopType.demandKeywords[0]}.`,
     } as Record<string, string>
   }, [competitors, demo, place.neighbourhood, shopType])
 
@@ -188,18 +187,35 @@ export function AiAssistant({
     const seeded = matchKillerAnswer(q)
     if (seeded) return localize(seeded)
 
-    const local = answerMerchantQuestion(q, { shopType, place, demo, competitors, insights })
     const ql = q.toLowerCase()
-    // Keep beat / rival / catchment answers deterministic + shop-type aware (don't let chat invent kirana fluff)
+    const local = answerMerchantQuestion(q, { shopType, place, demo, competitors, insights })
+
+    // EDI / EMI always get a clear local answer (don't wait on model)
+    if (/\bedi\b|\bemi\b|daily cut|loan cut|settlement|equated daily/.test(ql)) {
+      return localize(local)
+    }
+
+    // Only force local for clear rival / household chips — everything else → Sarvam
     const preferLocal =
-      /beat|copy|rival|compet|household|biggest|strongest|demographic|how to win|defeat|steal risk|catchment|nearby/.test(
-        ql,
-      ) && !local.startsWith('Based on')
+      /^(who is my biggest|how many households|biggest rival|copy vs beat)/i.test(q.trim()) ||
+      (/beat rival|biggest rival|steal risk/.test(ql) && !local.startsWith('Ask me about'))
+
     if (preferLocal) return localize(local)
 
     try {
-      const reply = await chatMerchant({ question: q, lang, system })
-      if (reply) return cleanChatText(reply)
+      const reply = await chatMerchant({
+        question: q,
+        lang,
+        system,
+        history: messages
+          .slice(-6)
+          .filter((m) => m.role === 'you' || m.role === 'ai')
+          .map((m) => ({
+            role: m.role === 'you' ? ('user' as const) : ('assistant' as const),
+            content: m.text,
+          })),
+      })
+      if (reply?.trim()) return cleanChatText(reply)
       throw new Error('empty')
     } catch {
       return localize(local)
@@ -366,7 +382,7 @@ export function AiAssistant({
             </div>
 
             <div className="chat-chips mai-killer">
-              <p className="mai-killer-label">3 demo questions · ready answers</p>
+              <p className="mai-killer-label">Try these · or type any question</p>
               {prompts.map((p, i) => (
                 <button key={`${i}-${p}`} type="button" className="chip-btn" onClick={() => ask(p)}>
                   {p}

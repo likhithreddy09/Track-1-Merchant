@@ -170,9 +170,18 @@ export function buildGoogleReviewProfile(
       Math.pow(10, 1.4 + rand() * 2.1) * (shop.distanceKm < 0.8 ? 1.35 : 1) * (rating / 4),
     ) + Math.floor(rand() * 40)
 
+  // Bias one strength + one weakness per shop so every pin doesn’t look the same
+  const weakKey = THEME_KEYS[Math.floor(rand() * THEME_KEYS.length)]
+  const strongKey = THEME_KEYS[Math.floor(rand() * THEME_KEYS.length)]
   const themes: ReviewThemeScore[] = THEME_KEYS.map((key) => {
-    const score = Number(clamp(2.8 + rand() * 2.1 + (rating - 4) * 0.45, 2.2, 4.95).toFixed(2))
-    return { key, label: key[0].toUpperCase() + key.slice(1), score }
+    let score = 2.8 + rand() * 2.1 + (rating - 4) * 0.45
+    if (key === weakKey) score -= 0.85 + rand() * 0.4
+    if (key === strongKey && key !== weakKey) score += 0.7 + rand() * 0.35
+    return {
+      key,
+      label: key[0].toUpperCase() + key.slice(1),
+      score: Number(clamp(score, 2.2, 4.95).toFixed(2)),
+    }
   })
 
   // Star histogram that sums ≈ volume (Dirichlet on 5 bins, bias to rating)
@@ -336,7 +345,7 @@ export function enrichShopWithReviews(
 }
 
 /**
- * What merchant should COPY vs BEAT, from review theme gaps (shop-type aware).
+ * Short COPY / BEAT lines from theme gaps — varied by shop type + SKU, not one generic script.
  */
 export function buildRivalPlaybook(
   rival: GoogleReviewProfile,
@@ -347,63 +356,70 @@ export function buildRivalPlaybook(
   const strengths = sorted.slice(0, 2)
   const weaknesses = [...sorted].reverse().slice(0, 2)
   const id = shopType?.id || 'kirana'
-  const hero = shopType?.stockSkus?.[0] || 'hero SKUs'
+  const skus = shopType?.stockSkus || ['hero SKUs']
+  const a = skus[0]
+  const b = skus[1] || skus[0]
+  const praise = clipQuote(rival.topPraise, 36)
+  const complain = clipQuote(rival.topComplaint, 36)
 
-  const copy = strengths.map((t) => {
-    if (t.key === 'service') return `Copy their service — reviews praise: “${rival.topPraise}”.`
-    if (t.key === 'assortment') {
-      return id === 'electronics'
-        ? `Mirror their accessory wall — keep ${hero} + latest cases always visible.`
-        : `Mirror their assortment depth on hero SKUs before expanding long-tail.`
-    }
-    if (t.key === 'wait') return `Match their speed: second billing / token in peak hours.`
-    if (t.key === 'price') return `Show clear UPI / EMI / bundle prices like they do — transparency wins reviews.`
-    if (t.key === 'quality') {
-      return id === 'electronics'
-        ? `Copy their trust cues: sealed box + warranty card handed before payment.`
-        : `Adopt their quality ritual customers already praise.`
-    }
-    return `Raise store presentation to their bar — reviewers notice cleanliness first.`
-  })
+  const copyByTheme: Record<string, string> = {
+    service:
+      id === 'electronics'
+        ? `Match their demo patience — “${praise}”.`
+        : `Greet + advise like them — “${praise}”.`,
+    assortment:
+      id === 'electronics'
+        ? `Keep ${a} + ${b} on the front glass like they do.`
+        : `Front-shelf ${a} / ${b} the way they depth-stock.`,
+    wait: id === 'electronics' ? `Express accessory billing in peak.` : `Second counter in evening rush.`,
+    price:
+      id === 'electronics'
+        ? `Show EMI + UPI price on ${a} in big font.`
+        : `Clear MRP tags on ${a} — no hidden add-ons.`,
+    quality:
+      id === 'electronics'
+        ? `Hand sealed box + warranty before payment.`
+        : `Show fresh date / sealed packs near door.`,
+    cleanliness: `Keep billing desk as clean as their reviews expect.`,
+  }
 
-  const beat = weaknesses.map((t) => {
-    if (t.key === 'wait') {
-      return id === 'electronics'
-        ? `Beat their peak wait — token for repairs, express accessory billing.`
-        : `Beat wait time — open a second billing lane in peak hours.`
-    }
-    if (t.key === 'price') {
-      return id === 'electronics'
-        ? `Price-match on 5 phones/accessories and post EMI in big font.`
-        : `Undercut on 5 local hero SKUs and pin price tags customers can photo.`
-    }
-    if (t.key === 'service') {
-      return id === 'electronics'
-        ? `Win on patient demos — no hard upsell; their staff reviews drag ★.`
-        : `Win on advice — remember regulars; their service reviews drag rating.`
-    }
-    if (t.key === 'assortment') return `Stock what they miss (e.g. ${hero}) — capture diverted demand.`
-    if (t.key === 'quality') {
-      return id === 'electronics'
-        ? `Guarantee sealed + warranty; ask for a Google review after every accessory sale.`
-        : `Guarantee fresher / sealed stock and ask for a review after purchase.`
-    }
-    return id === 'electronics'
-      ? `Win on clean glass counters + lit demo wall — easy ★ lift.`
-      : `Win on clean displays & lighting — easy ★ lift vs this rival.`
-  })
+  const beatByTheme: Record<string, string> = {
+    wait:
+      id === 'electronics'
+        ? `Token for repairs; skip queue for ${b}.`
+        : `Open lane 2 at peak — beat their wait.`,
+    price:
+      id === 'electronics'
+        ? `Price-match ${a}; post EMI board.`
+        : `Beat ${a} / ${b} price vs them; pin tags.`,
+    service:
+      id === 'electronics'
+        ? `Soft demo, no hard upsell — their reviews slip here.`
+        : `Remember regulars by name — they lose on “${complain}”.`,
+    assortment: `Stock ${a} when they go thin — steal the walk-in.`,
+    quality:
+      id === 'electronics'
+        ? `Sealed + warranty guarantee; ask ★ after sale.`
+        : `Fresher pack than them on ${a}; ask for a review.`,
+    cleanliness: `Lit, clean window this week — easy ★ vs them.`,
+  }
+
+  const copy = strengths.map((t) => copyByTheme[t.key] || `Match their ${t.label.toLowerCase()} bar.`)
+  const beat = weaknesses.map((t) => beatByTheme[t.key] || `Win on ${t.label.toLowerCase()} this week.`)
 
   if ((youBias.price || 0) > 0) {
-    beat.push(
-      id === 'electronics'
-        ? 'Board a public “price match on accessories” promise this week.'
-        : 'Keep a public price-match board for top staples.',
-    )
+    beat.push(id === 'electronics' ? `Board “match ${a} price” this week.` : `Price-match board for ${a}.`)
   }
 
   const scorecard = `★ ${rival.rating} · ${rival.reviewCount.toLocaleString()} ${
     rival.live ? 'Google' : 'model'
-  } reviews · sentiment ${rival.sentiment}/100 · ${rival.recentReviews30d} in last 30d`
+  } reviews · ${rival.recentReviews30d} in 30d`
 
   return { copy, beat, scorecard }
+}
+
+function clipQuote(text: string, max: number) {
+  const t = text.replace(/\s+/g, ' ').trim()
+  if (t.length <= max) return t
+  return `${t.slice(0, max - 1).trim()}…`
 }

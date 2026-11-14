@@ -10,8 +10,8 @@ export function Landing({ onGetStarted }: { onGetStarted: () => void }) {
             <a className="nav-link" href="#how">
               How it works
             </a>
-            <a className="nav-link" href="#ai">
-              Merchant AI
+            <a className="nav-link" href="#demo">
+              Demo path
             </a>
             <button className="btn btn-primary" type="button" onClick={onGetStarted}>
               Start setup
@@ -31,16 +31,16 @@ export function Landing({ onGetStarted }: { onGetStarted: () => void }) {
             />
             <span className="lp-product">Neighbourhood</span>
           </h1>
-          <p className="lp-title">Street map, rivals, and EDI from idle stock.</p>
+          <p className="lp-title">Street map. Nearby rivals. Idle stock → today’s EDI.</p>
           <p className="lp-sub">
-            Pin your kirana. See people nearby, rivals on the map, then sell slow stock to cover
-            today’s Paytm EDI before settlement.
+            Pin your kirana. See who lives nearby and which rivals are close. Then sell slow or
+            near-expiry stock so the cash covers today’s Paytm EDI before settlement.
           </p>
           <div className="lp-cta">
             <button className="btn btn-primary" type="button" onClick={onGetStarted}>
               Launch Neighbourhood
             </button>
-            <a className="btn btn-ghost" href="#ai">
+            <a className="btn btn-ghost" href="#how">
               How it works
             </a>
           </div>
@@ -50,106 +50,103 @@ export function Landing({ onGetStarted }: { onGetStarted: () => void }) {
       <section className="lp-strip">
         <div className="lp-wrap lp-strip-grid">
           <div>
-            <b>Live Google streets</b>
-            <span>Real map · your area chrome</span>
+            <b>Street map</b>
+            <span>Your pin · live area view</span>
           </div>
           <div>
-            <b>Catchment maths</b>
-            <span>0.5–2 km gravity · HH ± CI</span>
+            <b>Nearby rivals</b>
+            <span>Distance · ratings · threat</span>
           </div>
           <div>
-            <b>Review playbook</b>
-            <span>What to copy vs beat</span>
+            <b>Who lives nearby</b>
+            <span>People · households · week demand</span>
           </div>
           <div>
-            <b>Buy ↔ Sell</b>
-            <span>Local inventory exchange</span>
+            <b>Cover EDI</b>
+            <span>Sell idle stock → pay daily cut</span>
           </div>
         </div>
       </section>
 
       <section className="lp-section" id="how">
         <div className="lp-wrap">
-          <div className="step-label">Product</div>
-          <h2 className="lp-h2">Two engines. One growth loop.</h2>
+          <div className="step-label">What we solve</div>
+          <h2 className="lp-h2">Three pains. One board.</h2>
           <p className="lp-lead">
-            Demand tells you what the neighbourhood needs. Exchange finds who nearby can fill or take
-            stock.
+            Merchants struggle to see their street, free cash stuck in stock, and still pay Paytm’s
+            daily EDI cut.
           </p>
           <div className="lp-cards">
             <article className="lp-card">
               <div className="lp-card-num">01</div>
-              <h3>Demand Intelligence</h3>
+              <h3>Know the street</h3>
               <p>
-                Population ± CI, households, age mix, target customers, and live street pulse — with
-                model confidence scored.
+                Live map with your shop, catchment rings, rival pins, and a simple overview of people
+                and households nearby.
               </p>
             </article>
             <article className="lp-card">
               <div className="lp-card-num">02</div>
-              <h3>Inventory Exchange</h3>
+              <h3>Move idle stock</h3>
               <p>
-                List ageing / near-expiry stock. We match PGs, restaurants and nearby shops —
-                then buy or sell locally.
+                List slow or near-expiry SKUs. Match nearby shops that need them — before stock
+                expires on your shelf.
               </p>
             </article>
             <article className="lp-card">
               <div className="lp-card-num">03</div>
-              <h3>Closed loop</h3>
+              <h3>Cover today’s EDI</h3>
               <p>
-                Market signal → shelf decision → local match. Every trade sharpens the next
-                recommendation.
+                Cash from the deal helps pay Paytm’s daily loan cut before settlement — so EDI does
+                not surprise you.
               </p>
             </article>
           </div>
         </div>
       </section>
 
-      <section className="lp-section lp-ai" id="ai">
+      <section className="lp-section lp-ai" id="demo">
         <div className="lp-wrap">
-          <div className="step-label">How it works</div>
-          <h2 className="lp-h2">What you can show in the demo</h2>
+          <div className="step-label">Demo path</div>
+          <h2 className="lp-h2">Show judges in under a minute</h2>
           <p className="lp-lead">
-            Live map + neighbourhood scores in the browser. Highlight: sell idle stock to cover
-            today’s <strong>Paytm EDI</strong>.
+            Login → allow location → map opens → Inventory → <strong>Cover EDI</strong>.
           </p>
 
           <div className="lp-ai-grid">
             <div className="lp-ai-main">
-              <h3>Neighbourhood Engine (custom)</h3>
+              <h3>What you will see</h3>
               <ul>
                 <li>
-                  <strong>Catchment gravity</strong> — 0.5/1/1.5/2 km rings × dens × e^(−λd) → people
-                  &amp; HH ± CI
+                  <strong>Map first</strong> — your shop pin, 0.5–2 km rings, rival ratings on the
+                  street
                 </li>
                 <li>
-                  <strong>Segment ranker</strong> — scores target customers by shop type
+                  <strong>Overview</strong> — people nearby, households, closest rivals, this week’s
+                  peak
                 </li>
                 <li>
-                  <strong>Review scorer</strong> — Google-style ★, volume, themes, copy/beat playbook
+                  <strong>Cover EDI</strong> — pick ageing stock → match a nearby buyer → confirm sale
                 </li>
                 <li>
-                  <strong>Competition logistic</strong> — steal-risk from distance + rating + sentiment
+                  <strong>Live orders</strong> — packets animate to shops that need the stock
                 </li>
                 <li>
-                  <strong>Inventory matcher</strong> — ranks by match %, deal ₹, distance &amp; urgency
+                  <strong>Ask</strong> — plain answers on EDI, rivals, and households
                 </li>
               </ul>
             </div>
             <div className="lp-ai-side">
               <div className="lp-ai-box">
-                <h4>Live data inputs</h4>
-                <p>Browser geolocation</p>
-                <p>OpenStreetMap Nominatim (place)</p>
-                <p>OpenStreetMap Overpass (nearby shops)</p>
-                <p>Esri street / satellite tiles (no API key)</p>
-                <p>Google-style ★ + review model (seeded)</p>
+                <h4>Demo login</h4>
+                <p>Mobile · 1122334455</p>
+                <p>OTP · 123456</p>
+                <p>Then allow location (or use demo pin)</p>
               </div>
               <div className="lp-ai-box">
-                <h4>Production path</h4>
+                <h4>Hero line</h4>
                 <p>
-                  Plug Paytm merchant graph + payments signals, Google Places reviews, and optionally a
-                  Paytm LLM layer on the same scores.
+                  Idle stock unlocks cash. That cash covers today’s Paytm EDI before settlement.
                 </p>
               </div>
             </div>
@@ -161,9 +158,7 @@ export function Landing({ onGetStarted }: { onGetStarted: () => void }) {
         <div className="lp-wrap lp-bottom">
           <div>
             <h2 className="lp-h2">Ready for the demo</h2>
-            <p className="lp-lead">
-              Login → allow location → map opens → Inventory → Cover EDI.
-            </p>
+            <p className="lp-lead">Setup takes under a minute. Map opens by default.</p>
           </div>
           <button className="btn btn-navy" type="button" onClick={onGetStarted}>
             Go to setup →
@@ -174,7 +169,7 @@ export function Landing({ onGetStarted }: { onGetStarted: () => void }) {
       <footer className="lp-foot">
         <div className="lp-wrap lp-foot-inner">
           <span>Team Panther · Paytm Merchant Growth AI hackathon</span>
-          <span>Neighbourhood · λ=0.85 gravity · Google-style reviews · buy↔sell exchange</span>
+          <span>Neighbourhood · street map · rivals · Cover EDI</span>
         </div>
         <PaytmStripe />
       </footer>

@@ -230,12 +230,14 @@ export function Dashboard({
       <main className="nq-main">
         {tab === 'home' && (
           <div className="nq-home">
-            <p className="nq-lead">Street view for {shopName} — map, rivals, and EDI from stock.</p>
+            <p className="nq-lead">
+              {shopName} · people nearby, rivals on your street, and Cover EDI from idle stock.
+            </p>
 
             <button type="button" className="nq-edi-strip" onClick={() => go('stock')}>
-              <span className="nq-edi-strip-badge">Try this</span>
+              <span className="nq-edi-strip-badge">Start here</span>
               <strong>Cover today’s Paytm EDI</strong>
-              <span>Inventory → sell idle stock → cash pays the daily cut</span>
+              <span>Sell idle stock → cash pays the daily cut</span>
             </button>
 
             <section className="nq-metrics" aria-label="Key numbers">

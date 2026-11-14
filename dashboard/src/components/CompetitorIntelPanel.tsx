@@ -19,8 +19,8 @@ export function CompetitorIntelPanel({
             title={compact ? 'Tap a rival pin' : 'No rival selected'}
             body={
               compact
-                ? 'See why they win customers — and the one move you can make this week.'
-                : `${emptyHint} Tap a pin to see their review gap and one move to beat them.`
+                ? 'One gap. One move for this week.'
+                : `${emptyHint} Tap a pin for a short gap + move.`
             }
           />
         </div>
@@ -28,22 +28,19 @@ export function CompetitorIntelPanel({
     )
   }
 
-  const { shop, moveNow, weakness, copyFromRival, beatRival, stealRisk, themeBars, peakHours } =
-    intel
+  const { shop, moveNow, weakness, stealRisk, themeBars, peakHours } = intel
   const reviews = shop.reviews
   const rating = reviews?.rating ?? shop.rating
   const reviewCount = reviews?.reviewCount ?? 0
   const photo = shop.photoUrl || shopFrontPhoto(shop)
-  const beat = beatRival[0]
-  const copy = copyFromRival[0]
   const themes = themeBars?.length ? themeBars : reviews?.themes || []
   const theirEdge = [...themes].sort((a, b) => b.score - a.score)[0]
   const yourOpening = [...themes].sort((a, b) => a.score - b.score)[0]
-  const risk = riskLabel(stealRisk)
+  const risk = riskLabel(stealRisk, shop.distanceKm, shop.name)
 
   if (compact) {
     return (
-      <div className="ra-float ra-float-premium ra-float-action" key={shop.id}>
+      <div className="ra-float ra-float-premium ra-float-action ra-float-tight" key={shop.id}>
         <div className="ra-float-top">
           <img className="ra-float-thumb" src={photo} alt="" loading="lazy" decoding="async" />
           <div className="ra-float-id">
@@ -53,16 +50,16 @@ export function CompetitorIntelPanel({
             </div>
             <p>
               {shop.distanceKm} km · ★ {rating.toFixed(1)}
-              {reviewCount ? ` · ${reviewCount.toLocaleString()} reviews` : ''}
+              {reviewCount ? ` · ${reviewCount.toLocaleString()}` : ''}
+              {peakHours ? ` · ${shortPeak(peakHours)}` : ''}
             </p>
-            {peakHours ? <p className="ra-float-peak">Peak {shortPeak(peakHours)}</p> : null}
           </div>
         </div>
 
         <div className="ra-float-body">
           <div className={`ra-float-risk ra-risk-${risk.level}`}>
             <div className="ra-float-risk-top">
-              <em>Why this matters</em>
+              <em>Steal risk</em>
               <b>{stealRisk}%</b>
             </div>
             <div className="ra-float-risk-bar" aria-hidden="true">
@@ -73,50 +70,34 @@ export function CompetitorIntelPanel({
 
           <div className="ra-float-vs">
             <div className="they">
-              <em>They win on</em>
+              <em>They win</em>
               <strong>{theirEdge?.label || 'Trust'}</strong>
               <p>
                 {reviews?.topPraise
-                  ? `“${shorten(reviews.topPraise, 48)}”`
-                  : 'Customers already prefer them here.'}
+                  ? `“${shorten(reviews.topPraise, 42)}”`
+                  : 'Customers prefer them here.'}
               </p>
             </div>
             <div className="you">
-              <em>Your opening</em>
+              <em>Your gap</em>
               <strong>{yourOpening?.label || 'Service'}</strong>
               <p>
                 {reviews?.topComplaint
-                  ? `“${shorten(reviews.topComplaint, 48)}”`
-                  : shorten(weakness, 48)}
+                  ? `“${shorten(reviews.topComplaint, 42)}”`
+                  : shorten(weakness, 42)}
               </p>
             </div>
           </div>
 
           <div className="ra-float-ai">
-            <em>This week’s move</em>
-            <p>{shorten(moveNow || weakness, 100)}</p>
-          </div>
-
-          <div className="ra-float-moves ra-float-moves-split">
-            {copy && (
-              <div className="copy">
-                <em>Copy</em>
-                <p>{shorten(copy, 70)}</p>
-              </div>
-            )}
-            {beat && (
-              <div className="beat">
-                <em>Beat</em>
-                <p>{shorten(beat, 70)}</p>
-              </div>
-            )}
+            <em>Do this week</em>
+            <p>{shorten(moveNow, 88)}</p>
           </div>
         </div>
       </div>
     )
   }
 
-  const actions = [beatRival[0], copyFromRival[0], moveNow].filter(Boolean).slice(0, 3)
   return (
     <div className="ra-card ra-card-rich" key={shop.id}>
       <div className="ra-hero">
@@ -134,7 +115,7 @@ export function CompetitorIntelPanel({
 
       <div className={`ra-sheet-risk ra-risk-${risk.level}`}>
         <div>
-          <em>Customer steal risk</em>
+          <em>Steal risk</em>
           <p>{risk.line}</p>
         </div>
         <b>{stealRisk}%</b>
@@ -142,61 +123,66 @@ export function CompetitorIntelPanel({
 
       <div className="ra-float-vs ra-sheet-vs">
         <div className="they">
-          <em>They win on</em>
+          <em>They win</em>
           <strong>{theirEdge?.label || 'Trust'}</strong>
-          <p>{reviews?.topPraise ? `“${shorten(reviews.topPraise, 70)}”` : '—'}</p>
+          <p>{reviews?.topPraise ? `“${shorten(reviews.topPraise, 56)}”` : '—'}</p>
         </div>
         <div className="you">
-          <em>You can win on</em>
+          <em>Your gap</em>
           <strong>{yourOpening?.label || 'Service'}</strong>
           <p>
-            {reviews?.topComplaint ? `“${shorten(reviews.topComplaint, 70)}”` : shorten(weakness, 70)}
+            {reviews?.topComplaint ? `“${shorten(reviews.topComplaint, 56)}”` : shorten(weakness, 56)}
           </p>
         </div>
       </div>
 
       <div className="ra-ai">
-        <em>This week’s move</em>
-        <p>{shorten(moveNow, 140)}</p>
+        <em>Do this week</em>
+        <p>{shorten(moveNow, 110)}</p>
       </div>
 
       {reviews?.live && reviews.snippets && reviews.snippets.length > 0 ? (
         <div className="ra-reviews">
           <h4>What customers say</h4>
           <ul>
-            {reviews.snippets.slice(0, 3).map((s) => (
+            {reviews.snippets.slice(0, 2).map((s) => (
               <li key={`${s.author}-${s.text.slice(0, 24)}`}>
                 <b>
                   ★ {s.rating} · {s.author}
                 </b>
                 <span>{s.relativeTime}</span>
-                <p>{shorten(s.text, 160)}</p>
+                <p>{shorten(s.text, 120)}</p>
               </li>
             ))}
           </ul>
         </div>
       ) : null}
-
-      <div className="ra-todo">
-        <h4>Playbook</h4>
-        <ol>
-          {actions.map((line) => (
-            <li key={line}>{shorten(line, 120)}</li>
-          ))}
-        </ol>
-      </div>
     </div>
   )
 }
 
-function riskLabel(stealRisk: number): { level: 'high' | 'mid' | 'low'; line: string } {
+function riskLabel(
+  stealRisk: number,
+  km: number,
+  name: string,
+): { level: 'high' | 'mid' | 'low'; line: string } {
+  const short = name.split(/[\s,/]+/)[0]
   if (stealRisk >= 65) {
-    return { level: 'high', line: 'High — they’re close enough to pull your regulars.' }
+    return {
+      level: 'high',
+      line: `${short} at ${km} km can pull your regulars.`,
+    }
   }
   if (stealRisk >= 40) {
-    return { level: 'mid', line: 'Watch — compete on one clear gap, not only price.' }
+    return {
+      level: 'mid',
+      line: `Close enough to watch — win on one gap vs ${short}.`,
+    }
   }
-  return { level: 'low', line: 'Manageable — push promo into underserved pockets.' }
+  return {
+    level: 'low',
+    line: `${short} is farther — push promo into empty pockets.`,
+  }
 }
 
 function shortPeak(peak: string) {

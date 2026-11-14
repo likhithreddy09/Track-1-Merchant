@@ -7750,6 +7750,13 @@ a { color: var(--cyan); text-decoration: none; }
   color: #002970;
 }
 .lq-skin-radar .ra-float-metrics b { color: #f1f5f9; }
+.ra-float-tight .ra-float-body {
+  gap: 0.4rem;
+}
+.ra-float-tight .ra-float-vs p {
+  font-size: 11px;
+  line-height: 1.3;
+}
 .ra-float-ai {
   margin: 0 0.7rem 0.55rem;
   padding: 0.55rem 0.65rem;
