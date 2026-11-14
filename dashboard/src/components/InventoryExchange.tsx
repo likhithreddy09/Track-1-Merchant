@@ -41,90 +41,104 @@ function shortenLine(text: string, max: number) {
   return `${t.slice(0, max - 1).trim()}…`
 }
 
-function InventorySidePanel({
-  flow,
+/** Live order map: shelf scan → street radar → packets flying → cash unlock */
+function StockMoveStage({
+  mode,
   shopName,
-  step,
   sku,
-  buyerLabel,
-  idleValue,
+  buyers,
+  activeBuyer,
   unlock,
-  dailyEdi,
-  coverDays,
-  busy,
+  moving,
   done,
 }: {
-  flow: Flow
+  mode: 'shelf' | 'radar' | 'route' | 'market'
   shopName: string
-  step: Step
   sku?: string
-  buyerLabel?: string | null
-  idleValue: number
-  unlock: number
-  dailyEdi: number
-  coverDays: number
-  busy: boolean
-  done: boolean
+  buyers: { label: string; km: number }[]
+  activeBuyer?: string | null
+  unlock?: number
+  moving?: boolean
+  done?: boolean
 }) {
-  const status =
-    done
-      ? flow === 'emi'
-        ? 'Sale confirmed · cash ready for EDI'
-        : 'Deal confirmed'
-      : busy
-        ? 'Sending offer…'
-        : step === 1
-          ? flow === 'market'
-            ? 'Browse a deal to continue'
-            : 'Select an item from your shelf'
-          : step === 2
-            ? sku
-              ? `Matching buyers for ${sku}`
-              : 'Review deal details'
-            : 'Confirm to finish'
+  const pins = buyers.slice(0, 5)
+  const title =
+    mode === 'shelf'
+      ? 'Scanning your shelf…'
+      : mode === 'radar'
+        ? `Mapping buyers for ${sku || 'stock'}…`
+        : mode === 'market'
+          ? 'Street deals lighting up…'
+          : done
+            ? 'Stock on the move · cash unlocked'
+            : moving
+              ? 'Dispatching stock along the street…'
+              : 'Trade route ready'
 
   return (
-    <aside className="ix-side" aria-label="Deal summary">
-      <p className="ix-side-kicker">Summary</p>
-      <h3 className="ix-side-title">{shopName}</h3>
-      <p className="ix-side-status">{status}</p>
+    <div className={`ix-stage ix-stage-${mode} ${moving ? 'moving' : ''} ${done ? 'done' : ''}`}>
+      <div className="ix-stage-hd">
+        <span className="ix-stage-live">Live orders</span>
+        <strong>{title}</strong>
+      </div>
 
-      <dl className="ix-side-stats">
-        <div>
-          <dt>{flow === 'emi' ? 'Daily EDI' : 'Idle stock'}</dt>
-          <dd>
-            {flow === 'emi'
-              ? `₹${dailyEdi.toLocaleString('en-IN')}`
-              : `₹${idleValue.toLocaleString('en-IN')}`}
-          </dd>
-        </div>
-        <div>
-          <dt>{flow === 'emi' ? 'Can cover' : 'Unlockable'}</dt>
-          <dd>
-            {flow === 'emi' ? `~${coverDays} days` : `₹${unlock.toLocaleString('en-IN')}`}
-          </dd>
-        </div>
-      </dl>
+      <div className="ix-map" aria-hidden="true">
+        <div className="ix-map-grid" />
+        <div className="ix-radar" />
+        <div className="ix-radar delay" />
 
-      {(sku || buyerLabel) && (
-        <div className="ix-side-route">
-          <div>
-            <span>Item</span>
-            <strong>{sku || '—'}</strong>
+        <div className="ix-pin you">
+          <b />
+          <em>{shopName.split(' ')[0]}</em>
+        </div>
+
+        {mode === 'shelf' && (
+          <div className="ix-shelf-scan">
+            <i />
+            <i />
+            <i />
           </div>
-          <div>
-            <span>Buyer</span>
-            <strong>{buyerLabel || 'Not selected'}</strong>
-          </div>
-        </div>
-      )}
+        )}
 
-      {flow === 'emi' && (
-        <p className="ix-side-note">
-          Sell ahead of settlement to keep the daily loan cut on track.
-        </p>
-      )}
-    </aside>
+        {pins.map((p, i) => (
+          <div
+            key={p.label}
+            className={`ix-pin buyer b${i} ${activeBuyer === p.label ? 'hot' : ''}`}
+            style={{ ['--i' as string]: i }}
+          >
+            <b />
+            <em>{p.label.split(' ')[0]}</em>
+            <span>{p.km} km</span>
+          </div>
+        ))}
+
+        {(mode === 'radar' || mode === 'route') &&
+          pins.slice(0, 3).map((p, i) => (
+            <div
+              key={`pkt-${p.label}`}
+              className={`ix-packet p${i} ${activeBuyer === p.label || mode === 'radar' ? 'fly' : ''}`}
+              style={{ ['--i' as string]: i }}
+            >
+              <i />
+            </div>
+          ))}
+
+        {(mode === 'radar' || mode === 'route') && (
+          <svg className="ix-beams" viewBox="0 0 100 56" preserveAspectRatio="none">
+            <path className="ix-beam" d="M50 40 C 35 32, 22 24, 18 18" />
+            <path className="ix-beam d1" d="M50 40 C 55 28, 70 20, 82 16" />
+            <path className="ix-beam d2" d="M50 40 C 60 36, 78 34, 88 30" />
+          </svg>
+        )}
+
+        {done && unlock != null && (
+          <div className="ix-cash-burst">
+            <strong>₹{unlock.toLocaleString('en-IN')}</strong>
+            <span>unlocked</span>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -143,7 +157,7 @@ export function InventoryExchange({
   location: GeoPoint
   nearbyShopNames: string[]
 }) {
-  const [flow, setFlow] = useState<Flow>('clear')
+  const [flow, setFlow] = useState<Flow>('emi')
   const [step, setStep] = useState<Step>(1)
   const [busy, setBusy] = useState(false)
   const [sent, setSent] = useState(false)
@@ -286,6 +300,32 @@ export function InventoryExchange({
     setSent(false)
   }
 
+  const stageBuyers = useMemo(() => {
+    if (suggestions.length) {
+      return suggestions.map((s) => ({ label: s.buyerLabel, km: s.distanceKm }))
+    }
+    if (nearbyShopNames.length) {
+      return nearbyShopNames.slice(0, 5).map((n, i) => ({
+        label: n,
+        km: Number((0.3 + i * 0.35).toFixed(2)),
+      }))
+    }
+    return [
+      { label: 'Local Mart', km: 0.4 },
+      { label: 'City Store', km: 0.8 },
+      { label: 'Neighbour Shop', km: 1.1 },
+    ]
+  }, [suggestions, nearbyShopNames])
+
+  const stageMode =
+    flow === 'market'
+      ? 'market'
+      : step === 1
+        ? 'shelf'
+        : step === 2
+          ? 'radar'
+          : 'route'
+
   const unlockNow =
     picked && buyer
       ? unlockRupees(picked.qty * picked.unitPrice, buyer.matchScore, buyer.urgency)
@@ -293,39 +333,69 @@ export function InventoryExchange({
   const coverNow = ediDaysCovered(unlockNow, dailyEdi)
 
   return (
-    <div className="wf ix-desk">
+    <div className="wf ix-desk ix-wow">
       <header className="wf-hd">
         <div>
           <h2>Inventory</h2>
           <p>
             {place.neighbourhood} · ₹{riskValue.toLocaleString('en-IN')} idle · ₹
-            {potentialUnlock.toLocaleString('en-IN')} unlockable
+            {potentialUnlock.toLocaleString('en-IN')} can unlock
           </p>
         </div>
-        {sent && <span className="wf-toast">{flow === 'emi' ? 'EMI covered' : 'Offer sent'}</span>}
+        {sent && <span className="wf-toast">{flow === 'emi' ? 'EDI covered' : 'Offer sent'}</span>}
       </header>
 
       <div className="ix-layout">
         <div className="ix-main">
+      <aside className="ix-edi-attention" aria-label="Paytm EDI payment">
+        <div className="ix-edi-attention-top">
+          <span className="ix-edi-badge">Attention · Paytm EDI</span>
+          <span className="ix-edi-due">Due today</span>
+        </div>
+        <div className="ix-edi-attention-grid">
+          <div>
+            <em>Daily EDI cut</em>
+            <strong>₹{dailyEdi.toLocaleString('en-IN')}</strong>
+          </div>
+          <div>
+            <em>Idle stock value</em>
+            <strong>₹{riskValue.toLocaleString('en-IN')}</strong>
+          </div>
+          <div>
+            <em>Sell now → cover</em>
+            <strong className="ix-edi-cover">~{emiCoverDays} days</strong>
+          </div>
+        </div>
+        <p className="ix-edi-flow">
+          <b>Demo flow:</b> Pick stock → match a nearby buyer → confirm sale → cash covers today’s EDI
+          before settlement.
+        </p>
+        {flow !== 'emi' && (
+          <button type="button" className="ix-edi-cta" onClick={() => switchFlow('emi')}>
+            Open Cover EDI
+          </button>
+        )}
+      </aside>
+
       <div
         className={`ix-cash-bar ${flow === 'emi' ? 'ix-cash-bar-emi' : ''}`}
-        aria-label={flow === 'emi' ? 'EMI coverage' : 'Cash impact'}
+        aria-label={flow === 'emi' ? 'EDI coverage' : 'Cash impact'}
       >
         {flow === 'emi' ? (
           <>
             <div>
-              <em>Daily EDI</em>
+              <em>Today’s EDI</em>
               <strong>₹{dailyEdi.toLocaleString('en-IN')}</strong>
             </div>
             <div>
-              <em>Can cover</em>
+              <em>This sale can cover</em>
               <strong className="ix-unlock">~{emiCoverDays} days</strong>
             </div>
             <div>
-              <em>Unlockable</em>
+              <em>Unlockable cash</em>
               <strong className="ix-unlock">₹{potentialUnlock.toLocaleString('en-IN')}</strong>
             </div>
-            <p>Sell idle stock now — raise cash before settlement, keep the daily loan cut on track.</p>
+            <p>Sell before settlement. Cash from the deal pays the daily EDI cut.</p>
           </>
         ) : (
           <>
@@ -337,7 +407,7 @@ export function InventoryExchange({
               <em>Can unlock</em>
               <strong className="ix-unlock">₹{potentialUnlock.toLocaleString('en-IN')}</strong>
             </div>
-            <p>Pick an item — watch the street map update on the right.</p>
+            <p>Pick an item — nearby buyers show on the right.</p>
           </>
         )}
       </div>
@@ -346,11 +416,23 @@ export function InventoryExchange({
         <button
           type="button"
           role="tab"
+          aria-selected={flow === 'emi'}
+          className={`wf-mode-emi ${flow === 'emi' ? 'on' : ''}`}
+          onClick={() => switchFlow('emi')}
+        >
+          <b>1</b>
+          <span className="wf-mode-title">Cover EDI</span>
+          <em>Sell stock · pay today’s cut</em>
+          <i className="wf-mode-tag">Try this</i>
+        </button>
+        <button
+          type="button"
+          role="tab"
           aria-selected={flow === 'clear'}
           className={flow === 'clear' ? 'on' : ''}
           onClick={() => switchFlow('clear')}
         >
-          <b>A</b>
+          <b>2</b>
           <span className="wf-mode-title">Move slow stock</span>
           <em>Shelf → nearby shops</em>
         </button>
@@ -361,20 +443,9 @@ export function InventoryExchange({
           className={flow === 'market' ? 'on' : ''}
           onClick={() => switchFlow('market')}
         >
-          <b>B</b>
+          <b>3</b>
           <span className="wf-mode-title">Street deals</span>
-          <em>Buy surplus / fill gaps</em>
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={flow === 'emi'}
-          className={flow === 'emi' ? 'on' : ''}
-          onClick={() => switchFlow('emi')}
-        >
-          <b>C</b>
-          <span className="wf-mode-title">Cover EMI</span>
-          <em>Sell stock · pay daily cut</em>
+          <em>Buy surplus nearby</em>
         </button>
       </div>
 
@@ -422,10 +493,10 @@ export function InventoryExchange({
             <section className="wf-pane">
               <header className="wf-pane-hd">
                 <div>
-                  <h3>{flow === 'emi' ? 'Stock you can sell' : 'Ageing stock on your shelf'}</h3>
+                  <h3>{flow === 'emi' ? 'Sell this to cover EDI' : 'Ageing stock on your shelf'}</h3>
                   <p>
                     {flow === 'emi'
-                      ? 'Sorted by unlock amount. Sell before settlement to cover today’s EDI.'
+                      ? 'Highest unlock first. One sale can cover today’s EDI.'
                       : 'Pick an item to find nearby buyers.'}
                   </p>
                 </div>
@@ -664,9 +735,9 @@ export function InventoryExchange({
                     {picked.qty} pcs · ₹{(picked.qty * picked.unitPrice).toLocaleString('en-IN')} locked
                   </span>
                 </div>
-                <span className="ix-summary-arrow" aria-hidden="true">
+                <b className={busy || sent ? 'ix-arrow-run' : ''} aria-hidden="true">
                   →
-                </span>
+                </b>
                 <div>
                   <em>They take</em>
                   <strong>{buyer.buyerLabel}</strong>
@@ -676,7 +747,7 @@ export function InventoryExchange({
                 </div>
               </div>
 
-              <div className="ix-unlock-banner">
+              <div className={`ix-unlock-banner ${sent ? 'pop' : ''}`}>
                 {flow === 'emi' ? (
                   <>
                     <b>₹{unlockNow.toLocaleString('en-IN')}</b> unlocked · covers ~
@@ -693,15 +764,15 @@ export function InventoryExchange({
                 {!sent ? (
                   <button
                     type="button"
-                    className="btn btn-primary"
+                    className="btn btn-primary wf-send"
                     disabled={busy}
                     onClick={sendOffer}
                   >
                     {busy
-                      ? 'Sending…'
+                      ? 'Moving stock…'
                       : flow === 'emi'
                         ? `Confirm sale · ~${coverNow} EDI days`
-                        : `Confirm · unlock ₹${unlockNow.toLocaleString('en-IN')}`}
+                        : `Dispatch · unlock ₹${unlockNow.toLocaleString('en-IN')}`}
                   </button>
                 ) : (
                   <button type="button" className="btn btn-primary" onClick={resetFlow}>
@@ -820,9 +891,9 @@ export function InventoryExchange({
                     {(marketDeal.qty * marketDeal.unitPrice).toLocaleString('en-IN')}
                   </span>
                 </div>
-                <span className="ix-summary-arrow" aria-hidden="true">
+                <b className={busy || sent ? 'ix-arrow-run' : ''} aria-hidden="true">
                   →
-                </span>
+                </b>
                 <div>
                   <em>Shop</em>
                   <strong>{marketDeal.shopName}</strong>
@@ -839,11 +910,11 @@ export function InventoryExchange({
                 {step === 3 && !sent && (
                   <button
                     type="button"
-                    className="btn btn-primary"
+                    className="btn btn-primary wf-send"
                     disabled={busy}
                     onClick={sendOffer}
                   >
-                    {busy ? 'Sending…' : 'Confirm deal'}
+                    {busy ? 'Moving on map…' : 'Confirm & dispatch'}
                   </button>
                 )}
                 {sent && (
@@ -858,19 +929,34 @@ export function InventoryExchange({
       )}
         </div>
 
-        <InventorySidePanel
-          flow={flow}
-          shopName={shopName}
-          step={step}
-          sku={picked?.sku || marketDeal?.sku}
-          buyerLabel={buyer?.buyerLabel || marketDeal?.shopName}
-          idleValue={riskValue}
-          unlock={unlockNow}
-          dailyEdi={dailyEdi}
-          coverDays={coverNow}
-          busy={busy}
-          done={sent}
-        />
+        <aside className="ix-stage-rail" aria-label="Live stock orders">
+          <StockMoveStage
+            mode={stageMode}
+            shopName={shopName}
+            sku={picked?.sku || marketDeal?.sku}
+            buyers={
+              marketDeal
+                ? [
+                    { label: marketDeal.shopName, km: marketDeal.distanceKm },
+                    ...stageBuyers.slice(0, 3),
+                  ]
+                : stageBuyers
+            }
+            activeBuyer={buyer?.buyerLabel || marketDeal?.shopName}
+            unlock={unlockNow}
+            moving={busy}
+            done={sent}
+          />
+          <p className="ix-stage-hint">
+            {flow === 'emi'
+              ? picked
+                ? `~${coverNow} EDI days at ₹${dailyEdi.toLocaleString('en-IN')}/day`
+                : 'Pick stock — orders animate to nearby buyers.'
+              : picked || marketDeal
+                ? 'Selecting items updates this live order map.'
+                : 'Select a SKU or street deal to light up buyers.'}
+          </p>
+        </aside>
       </div>
     </div>
   )

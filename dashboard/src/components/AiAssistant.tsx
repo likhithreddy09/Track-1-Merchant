@@ -60,7 +60,7 @@ export function AiAssistant({
 
   const welcomeEn = useMemo(
     () =>
-      `Namaste! Merchant AI is ready for your ${shopType.label.toLowerCase()} in ${place.neighbourhood}. About ${demo.totalPeople.toLocaleString('en-IN')} people · ${demo.households.toLocaleString('en-IN')} households · ${competitors.length} rivals. Tap a question below — each has a ready answer for demo.`,
+      `Namaste. You’re set for ${shopType.label.toLowerCase()} in ${place.neighbourhood}: ${demo.totalPeople.toLocaleString('en-IN')} people · ${demo.households.toLocaleString('en-IN')} households · ${competitors.length} rivals. Tap a question below.`,
     [shopType.label, place.neighbourhood, demo.totalPeople, demo.households, competitors.length],
   )
 
@@ -85,7 +85,7 @@ export function AiAssistant({
             } Next: fix one weakness this week — don’t only discount.`
           })()
         : `Still mapping rivals around ${place.neighbourhood}. Next step: open the Map tab and wait for pins — then ask again.`,
-      [KILLER_QS[2]]: `Roughly ₹${idleEstimate.toLocaleString('en-IN')} can sit locked in slow / near-expiry SKUs for a ${shopType.label.toLowerCase()} like yours. Priority clears: ${skuA} and ${skuB}. If today’s Paytm EDI looks tight, open Inventory → Cover EMI → sell stock ahead of settlement. Next step: pick the top unlock item → confirm sale.`,
+      [KILLER_QS[2]]: `About ₹${idleEstimate.toLocaleString('en-IN')} is locked in slow stock. Clear ${skuA} and ${skuB} first. To pay today’s EDI: Inventory → Cover EDI → sell → confirm. Cash from the sale covers the daily cut before settlement.`,
     } as Record<string, string>
   }, [competitors, demo, place.neighbourhood, shopType])
 
@@ -320,10 +320,10 @@ export function AiAssistant({
   return (
     <div className={`mai-float ${open ? 'open' : ''} ${voiceOpen ? 'voice-on' : ''}`}>
       {open && !voiceOpen && (
-        <div className="mai-panel" role="dialog" aria-label="Ask AI">
+        <div className="mai-panel" role="dialog" aria-label="Ask">
           <div className="mai-panel-hd">
             <div>
-              <strong>Ask AI</strong>
+              <strong>Ask</strong>
               <span className="mai-hd-sub">{langNative}</span>
             </div>
             <div className="mai-hd-actions">
@@ -391,7 +391,7 @@ export function AiAssistant({
       )}
 
       {voiceOpen && (
-        <div className="mai-voice" role="dialog" aria-label="Voice Ask AI">
+        <div className="mai-voice" role="dialog" aria-label="Voice ask">
           <div className="mai-voice-top">
             <select
               value={lang}
@@ -457,7 +457,7 @@ export function AiAssistant({
             type="button"
             className="mai-fab-voice"
             onClick={openVoice}
-            aria-label="Voice Ask AI"
+            aria-label="Voice ask"
             title="Voice"
           >
             <span className="mai-fab-wave" aria-hidden="true">
@@ -471,9 +471,9 @@ export function AiAssistant({
             className={`mai-bubble ${open ? 'on' : ''}`}
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
-            aria-label={open ? 'Close Ask AI' : 'Open Ask AI'}
+            aria-label={open ? 'Close ask' : 'Open ask'}
           >
-            {open ? <span className="mai-bubble-x">×</span> : <span className="mai-bubble-label">Ask AI</span>}
+            {open ? <span className="mai-bubble-x">×</span> : <span className="mai-bubble-label">Ask</span>}
           </button>
         </div>
       )}

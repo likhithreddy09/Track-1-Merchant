@@ -222,7 +222,7 @@ export function Dashboard({
           </button>
           <button type="button" className={tab === 'stock' ? 'on' : ''} onClick={() => go('stock')}>
             Inventory
-            <em>{listings.length}</em>
+            <em>EDI</em>
           </button>
         </nav>
       </div>
@@ -230,7 +230,13 @@ export function Dashboard({
       <main className="nq-main">
         {tab === 'home' && (
           <div className="nq-home">
-            <p className="nq-lead">Here’s what matters for {shopName} right now.</p>
+            <p className="nq-lead">Street view for {shopName} — map, rivals, and EDI from stock.</p>
+
+            <button type="button" className="nq-edi-strip" onClick={() => go('stock')}>
+              <span className="nq-edi-strip-badge">Try this</span>
+              <strong>Cover today’s Paytm EDI</strong>
+              <span>Inventory → sell idle stock → cash pays the daily cut</span>
+            </button>
 
             <section className="nq-metrics" aria-label="Key numbers">
               <div className="nq-metric">
@@ -253,7 +259,7 @@ export function Dashboard({
                 <b>{listings.length}</b>
                 <span>
                   <button type="button" className="nq-text-btn" onClick={() => go('stock')}>
-                    View inventory
+                    Open Cover EDI
                   </button>
                 </span>
               </div>
@@ -386,7 +392,7 @@ export function Dashboard({
         </button>
         <button type="button" className={tab === 'stock' ? 'on' : ''} onClick={() => go('stock')}>
           <i>↔</i>
-          Stock
+          EDI
         </button>
       </nav>
 

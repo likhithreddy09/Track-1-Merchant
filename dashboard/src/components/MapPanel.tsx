@@ -415,7 +415,7 @@ export function MapPanel({
 
       {active && !loading && (
         <div className="lq-ai-chip lq-ai-chip-float">
-          <em>AI</em>
+          <em>Tip</em>
           <span>{aiTipFor(active)}</span>
         </div>
       )}

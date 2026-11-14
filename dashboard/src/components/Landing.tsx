@@ -31,18 +31,17 @@ export function Landing({ onGetStarted }: { onGetStarted: () => void }) {
             />
             <span className="lp-product">Neighbourhood</span>
           </h1>
-          <p className="lp-title">Merchant AI for your street — demand, rivals, stock.</p>
+          <p className="lp-title">Street map, rivals, and EDI from idle stock.</p>
           <p className="lp-sub">
-            Pin your shop. We estimate nearby people &amp; households, score competitors from
-            review patterns, and match surplus stock with shops around you — branded by your
-            neighbourhood name.
+            Pin your kirana. See people nearby, rivals on the map, then sell slow stock to cover
+            today’s Paytm EDI before settlement.
           </p>
           <div className="lp-cta">
             <button className="btn btn-primary" type="button" onClick={onGetStarted}>
               Launch Neighbourhood
             </button>
             <a className="btn btn-ghost" href="#ai">
-              How Merchant AI works
+              How it works
             </a>
           </div>
         </div>
@@ -108,11 +107,11 @@ export function Landing({ onGetStarted }: { onGetStarted: () => void }) {
 
       <section className="lp-section lp-ai" id="ai">
         <div className="lp-wrap">
-          <div className="step-label">Merchant AI</div>
-          <h2 className="lp-h2">What powers Neighbourhood</h2>
+          <div className="step-label">How it works</div>
+          <h2 className="lp-h2">What you can show in the demo</h2>
           <p className="lp-lead">
-            This hackathon build does <strong>not</strong> call ChatGPT / Gemini. It runs a custom{' '}
-            <strong>Neighbourhood Engine</strong> in the browser on live map + review-model signals.
+            Live map + neighbourhood scores in the browser. Highlight: sell idle stock to cover
+            today’s <strong>Paytm EDI</strong>.
           </p>
 
           <div className="lp-ai-grid">
@@ -163,7 +162,7 @@ export function Landing({ onGetStarted }: { onGetStarted: () => void }) {
           <div>
             <h2 className="lp-h2">Ready for the demo</h2>
             <p className="lp-lead">
-              Pick shop type → name → pin → Merchant AI board with catchment, rivals &amp; inventory.
+              Login → allow location → map opens → Inventory → Cover EDI.
             </p>
           </div>
           <button className="btn btn-navy" type="button" onClick={onGetStarted}>

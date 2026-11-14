@@ -27,7 +27,7 @@ export function WeekForecast({
     <div className="card">
       <div className="card-hd">
         <h3>7-day demand forecast</h3>
-        <span className="pill">AI outlook</span>
+        <span className="pill">This week</span>
       </div>
       <div className="card-bd">
         <div className="week-chart">

@@ -6,6 +6,7 @@ import { PaytmBrand } from './PaytmBrand'
 import { ShopIcon } from './ShopIcon'
 
 const DEMO_PIN = { lat: 17.4948, lng: 78.3996 }
+const DEMO_MOBILE = '1122334455'
 const FIXED_OTP = '123456'
 
 /** Demo store names by category — kirana is the default path */
@@ -30,9 +31,22 @@ const DEFAULT_STORE = STORE_OPTIONS.kirana[0]
 
 const STEPS = [
   { title: 'Your shop', hint: 'Kirana is selected by default — pick your store from the list.' },
-  { title: 'Mobile number', hint: 'We’ll send a one-time password to verify your shop.' },
-  { title: 'Enter OTP', hint: 'Demo OTP is fixed — use 123456.' },
+  {
+    title: 'Mobile number',
+    hint: `Demo account mobile: ${DEMO_MOBILE}`,
+  },
+  {
+    title: 'Enter OTP',
+    hint: `Demo OTP: ${FIXED_OTP} — then allow location access.`,
+  },
 ] as const
+
+const FALLBACK_PLACE: PlaceInfo = {
+  label: 'Kukatpally, Hyderabad',
+  neighbourhood: 'Kukatpally',
+  city: 'Hyderabad',
+  state: 'Telangana',
+}
 
 export function Onboarding({
   onStart,
@@ -49,11 +63,13 @@ export function Onboarding({
   const [step, setStep] = useState(0)
   const [shopType, setShopType] = useState<ShopType>(DEFAULT_TYPE)
   const [shopName, setShopName] = useState(DEFAULT_STORE)
-  const [mobile, setMobile] = useState('')
+  const [mobile, setMobile] = useState(DEMO_MOBILE)
   const [otp, setOtp] = useState('')
   const [verifying, setVerifying] = useState(false)
   const [locLabel, setLocLabel] = useState('')
   const [error, setError] = useState('')
+  const [showLocPopup, setShowLocPopup] = useState(false)
+  const [retryingLoc, setRetryingLoc] = useState(false)
 
   const stores = useMemo(
     () => STORE_OPTIONS[shopType.id] || [DEFAULT_STORE],
@@ -71,46 +87,67 @@ export function Onboarding({
     return value.replace(/\D/g, '').slice(0, max)
   }
 
-  async function resolveLocation(): Promise<{ location: GeoPoint; place: PlaceInfo }> {
+  function launchWith(location: GeoPoint, place: PlaceInfo) {
+    setShowLocPopup(false)
+    onStart({
+      location,
+      place,
+      shopType,
+      shopName: shopName.trim() || stores[0],
+    })
+  }
+
+  async function tryLiveLocation(): Promise<boolean> {
+    setLocLabel('Please allow location access…')
     try {
-      setLocLabel('Getting your location…')
       const pos = await getCurrentPosition()
       const info = await reverseGeocode(pos)
-      return { location: pos, place: info }
+      launchWith(pos, info)
+      return true
     } catch {
-      setLocLabel('Using demo pin…')
-      try {
-        const info = await reverseGeocode(DEMO_PIN)
-        return { location: DEMO_PIN, place: info }
-      } catch {
-        return {
-          location: DEMO_PIN,
-          place: {
-            label: 'Kukatpally, Hyderabad',
-            neighbourhood: 'Kukatpally',
-            city: 'Hyderabad',
-            state: 'Telangana',
-          },
-        }
-      }
+      return false
+    }
+  }
+
+  async function useDemoLocation() {
+    setRetryingLoc(true)
+    setLocLabel('Using demo pin…')
+    try {
+      const info = await reverseGeocode(DEMO_PIN)
+      launchWith(DEMO_PIN, info)
+    } catch {
+      launchWith(DEMO_PIN, FALLBACK_PLACE)
+    } finally {
+      setRetryingLoc(false)
+    }
+  }
+
+  async function retryLocation() {
+    setRetryingLoc(true)
+    setError('')
+    const ok = await tryLiveLocation()
+    setRetryingLoc(false)
+    if (!ok) {
+      setError('Location is still off. Enable it in browser settings, then try again.')
     }
   }
 
   async function verifyAndLaunch() {
     setError('')
+    if (mobile !== DEMO_MOBILE) {
+      setError(`Use demo account mobile ${DEMO_MOBILE}`)
+      return
+    }
     if (otp.trim() !== FIXED_OTP) {
       setError(`Invalid OTP. Use ${FIXED_OTP} for this demo.`)
       return
     }
     setVerifying(true)
     try {
-      const { location, place } = await resolveLocation()
-      onStart({
-        location,
-        place,
-        shopType,
-        shopName: shopName.trim() || stores[0],
-      })
+      const ok = await tryLiveLocation()
+      if (!ok) {
+        setShowLocPopup(true)
+      }
     } finally {
       setVerifying(false)
     }
@@ -127,6 +164,13 @@ export function Onboarding({
 
       <main className="su-main">
         <div className="su-card">
+          <div className="su-demo-banner" role="note">
+            <strong>Demo account</strong>
+            <span>
+              Mobile <b>{DEMO_MOBILE}</b> · OTP <b>{FIXED_OTP}</b>
+            </span>
+          </div>
+
           <nav className="su-steps" aria-label="Setup steps">
             {STEPS.map((s, i) => (
               <button
@@ -232,7 +276,7 @@ export function Onboarding({
                   className="su-input"
                   inputMode="numeric"
                   autoComplete="tel"
-                  placeholder="10-digit mobile"
+                  placeholder={DEMO_MOBILE}
                   value={mobile}
                   onChange={(e) => setMobile(digitsOnly(e.target.value, 10))}
                   autoFocus
@@ -241,7 +285,9 @@ export function Onboarding({
                   }}
                 />
               </div>
-              <p className="su-hint">We’ll use this only for demo OTP verification.</p>
+              <p className="su-otp-hint">
+                Demo account: use <strong>{DEMO_MOBILE}</strong>
+              </p>
 
               <div className="su-nav">
                 <button type="button" className="su-btn ghost" onClick={() => setStep(0)}>
@@ -252,6 +298,10 @@ export function Onboarding({
                   className="su-btn primary"
                   disabled={!mobileOk}
                   onClick={() => {
+                    if (mobile !== DEMO_MOBILE) {
+                      setError(`Use demo account mobile ${DEMO_MOBILE}`)
+                      return
+                    }
                     setOtp('')
                     setError('')
                     setStep(2)
@@ -260,6 +310,7 @@ export function Onboarding({
                   Send OTP
                 </button>
               </div>
+              {error && step === 1 && <p className="su-error">{error}</p>}
             </div>
           )}
 
@@ -280,7 +331,7 @@ export function Onboarding({
                 className="su-input su-otp"
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                placeholder="6-digit OTP"
+                placeholder={FIXED_OTP}
                 value={otp}
                 onChange={(e) => setOtp(digitsOnly(e.target.value, 6))}
                 autoFocus
@@ -291,10 +342,14 @@ export function Onboarding({
               <p className="su-otp-hint">
                 Demo OTP: <strong>{FIXED_OTP}</strong>
               </p>
+              <p className="su-hint">
+                After verify, please <strong>Allow</strong> location access so we can open your street
+                map.
+              </p>
               {verifying && (
-                <p className="su-hint">{locLabel || 'Verifying… then opening your map'}</p>
+                <p className="su-hint">{locLabel || 'Verifying… requesting location'}</p>
               )}
-              {error && <p className="su-error">{error}</p>}
+              {error && !showLocPopup && <p className="su-error">{error}</p>}
 
               <div className="su-nav">
                 <button
@@ -318,6 +373,45 @@ export function Onboarding({
           )}
         </div>
       </main>
+
+      {showLocPopup && (
+        <div className="su-loc-veil" role="dialog" aria-modal="true" aria-labelledby="su-loc-title">
+          <div className="su-loc-card">
+            <div className="su-loc-ico" aria-hidden="true">
+              <span />
+            </div>
+            <h2 id="su-loc-title">Enable location access</h2>
+            <p>
+              Location is off or blocked. Please allow location access in your browser so we can pin
+              your shop on the map.
+            </p>
+            <ol className="su-loc-steps">
+              <li>Tap the lock / site settings icon in the address bar</li>
+              <li>Set <strong>Location</strong> to <strong>Allow</strong></li>
+              <li>Come back and tap <strong>Try again</strong></li>
+            </ol>
+            {error && <p className="su-error">{error}</p>}
+            <div className="su-loc-actions">
+              <button
+                type="button"
+                className="su-btn primary wide"
+                disabled={retryingLoc}
+                onClick={() => void retryLocation()}
+              >
+                {retryingLoc ? 'Checking…' : 'Try again · Enable location'}
+              </button>
+              <button
+                type="button"
+                className="su-btn ghost wide"
+                disabled={retryingLoc}
+                onClick={() => void useDemoLocation()}
+              >
+                Continue with demo pin
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

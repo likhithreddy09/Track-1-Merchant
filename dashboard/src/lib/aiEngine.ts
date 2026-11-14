@@ -120,7 +120,7 @@ export function buildAiInsights(input: {
       id: 'target',
       tone: 'opportunity',
       title: `Primary target: ${topSegment?.title || shopType.targetSegments[0]}`,
-      body: `${topSegment?.why || ''} AI recommends aligning window display and top-shelf SKUs to this segment first.`,
+      body: `${topSegment?.why || ''} Put this segment first on the window and top shelf.`,
       confidence: Math.round(70 + rand() * 20),
     },
   ]

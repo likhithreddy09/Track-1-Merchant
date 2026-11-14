@@ -41,7 +41,7 @@ export function DealModal({
               <b>₹{deal.unitPrice}</b>
             </div>
             <div>
-              <label>AI match</label>
+              <label>Match</label>
               <b>{deal.matchScore}</b>
             </div>
             <div>

@@ -2,20 +2,20 @@ import { useEffect, useState } from 'react'
 import { Landing } from './components/Landing'
 import { Onboarding } from './components/Onboarding'
 import { Dashboard } from './components/Dashboard'
-import type { GeoPoint, PlaceInfo, ShopType } from './types'
+import { clearSession, loadSession, saveSession, type MerchantSession } from './lib/session'
 
 type Screen = 'landing' | 'setup' | 'dashboard'
 
-type Session = {
-  location: GeoPoint
-  place: PlaceInfo
-  shopType: ShopType
-  shopName: string
+function initialState(): { screen: Screen; session: MerchantSession | null } {
+  const saved = typeof window !== 'undefined' ? loadSession() : null
+  if (saved) return { screen: 'dashboard', session: saved }
+  return { screen: 'landing', session: null }
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('landing')
-  const [session, setSession] = useState<Session | null>(null)
+  const boot = initialState()
+  const [screen, setScreen] = useState<Screen>(boot.screen)
+  const [session, setSession] = useState<MerchantSession | null>(boot.session)
 
   useEffect(() => {
     const area = session?.place.neighbourhood || 'Neighbourhood'
@@ -29,6 +29,18 @@ export default function App() {
     document.title = titles[screen]
   }, [screen, session])
 
+  function startSession(payload: MerchantSession) {
+    saveSession(payload)
+    setSession(payload)
+    setScreen('dashboard')
+  }
+
+  function resetToSetup() {
+    clearSession()
+    setSession(null)
+    setScreen('setup')
+  }
+
   if (screen === 'landing') {
     return <Landing onGetStarted={() => setScreen('setup')} />
   }
@@ -36,11 +48,12 @@ export default function App() {
   if (screen === 'setup' || !session) {
     return (
       <Onboarding
-        onHome={() => setScreen('landing')}
-        onStart={(payload) => {
-          setSession(payload)
-          setScreen('dashboard')
+        onHome={() => {
+          clearSession()
+          setSession(null)
+          setScreen('landing')
         }}
+        onStart={startSession}
       />
     )
   }
@@ -52,10 +65,7 @@ export default function App() {
         place={session.place}
         shopType={session.shopType}
         shopName={session.shopName}
-        onReset={() => {
-          setSession(null)
-          setScreen('setup')
-        }}
+        onReset={resetToSetup}
       />
     </div>
   )
